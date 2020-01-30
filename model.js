@@ -11,7 +11,7 @@ let comentariosCollection = mongoose.Schema({
     fecha: {type: Date}
 });
 
-let comentario = mongoose.model('comments', commentsCollection);
+let comentario = mongoose.model('comments', comentariosCollection);
 
 let commentList = {
     get: function () {

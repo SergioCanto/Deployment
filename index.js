@@ -4,6 +4,7 @@ let uuid = require('uuid');
 let bodyParser = require('body-parser');
 let jsonParser = bodyParser.json();
 let app = express(); 
+let mongoose = require('mongoose');
 let { commentList } = require('./model'); 
 let { DATABASE_URL, PORT } = require('./config');
 
