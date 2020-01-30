@@ -1,6 +1,6 @@
 function loadComments(){
 
-    let url = "/blog-api/comentarios";
+    let url = "http://localhost:8080/blog-api/comentarios";
     let settings = {
         method : "GET"
     };
@@ -21,45 +21,47 @@ function autorComments(){
 
     $('#buscar').on('click', function(e){
 
-    let url = "/blog-api/comentarios-por-autor?autor=${autor}";
-    let settings = {
-        method : "GET"
-    };
+        let autorBuscar = $('#autorBuscar');
 
-    fetch(url, settings)
-        .then(response => {
-            if(response.ok){
-                return response.json();
-            }
-        })
-        .then(responseJSON => {
-            $('#commentList').empty();
+        let url = "http://localhost:8080/blog-api/comentarios-por-autor?autor=" + autorBuscar.value;
+        let settings = {
+            method : "GET"
+        };
 
-            responseJSON.forEach(comment => {
-                let {id, titulo, contenido, autor, fecha} = comment;
-        
-                $('#commentList').append(`
-                    <div class="paragraph">
-                        <li>
-                            <span class="sub"> ID: </span> ${id}
-                        </li>
-                        <li>
-                            <span class="sub"> Titulo: </span> ${titulo}
-                        </li>
-                        <li>
-                            <span class="sub"> Contenido: </span> ${contenido}
-                        </li>
-                        <li>
-                            <span class="sub"> Autor: </span> ${autor}
-                        </li>
-                        <li>
-                            <span class="sub"> Fecha: </span> ${fecha}
-                        </li>
-                    </div>
-                `)
+        fetch(url, settings)
+            .then(response => {
+                if(response.ok){
+                    $('#commentAutor').empty();
+                    return response.json();
+                }
+            })
+            .then(responseJSON => {
+                $('#commentAutor').empty();
+
+                for(let i = 0; i < responseJSON.length; i++){
+            
+                    $('#commentList').append(`
+                        <div class="paragraph">
+                            <li>
+                                <span class="sub"> ID: </span> ${responseJSON[i].id}
+                            </li>
+                            <li>
+                                <span class="sub"> Titulo: </span> ${responseJSON[i].titulo}
+                            </li>
+                            <li>
+                                <span class="sub"> Contenido: </span> ${responseJSON[i].contenido}
+                            </li>
+                            <li>
+                                <span class="sub"> Autor: </span> ${responseJSON[i].autor}
+                            </li>
+                            <li>
+                                <span class="sub"> Fecha: </span> ${responseJSON[i].fecha}
+                            </li>
+                        </div>
+                    `)
+                }
+                });
             });
-        });
-    });
 }
 
 function addComment(){
@@ -74,20 +76,31 @@ function addComment(){
         let contenido = $('#Contenido').val();
         let autor = $('#Autor').val();
 
-        $.ajax({
-            url : '/blog-api/nuevo-comentario',
-            method : "POST",
-            data : JSON.stringify({titulo, contenido, autor}),
-            ContentType : "application/json",
-            dataType : "json",
-            success : function( responseJSON ){
-                console.log(responseJSON);
-                location.reload();
-            },
-            error : function( err ){
-                console.log( err );
-            }
-        });
+        let url = 'http://localhost:8080/blog-api/nuevo-comentario';
+        let data = {
+            autor: autor.value,
+            titulo: titulo.value,
+            contenido: contenido.value
+        }
+
+        let settings = {
+            method: "POST",
+            headers: { "Content-type": "application/json; charset=UTF-8" },
+            body: JSON.stringify(data)
+        };
+
+        fetch(url, settings)
+            .then(response => {
+                if (response.ok) {
+                    autor.value = '';
+                    contenido.value = '';
+                    titulo.value = '';
+                    return response.json();
+                }
+            })
+            .then(responseJSON => {
+                loadComments();
+            });
     });
 
 }
@@ -105,27 +118,31 @@ function actualizarComment(){
         let contenido = $('#Contenido').val();
         let autor = $('#Autor').val();
 
-        let obj = {
-            id : id,
-            titulo : titulo,
-            contenido : contenido,
-            autor : autor
+        let url = 'http://localhost:8081/blog-api/actualizar-comentario/' + id.value;
+        let settings = {
+            method: "PUT",
+            headers: { "Content-type": "application/json"},
+            body: JSON.stringify({
+                id: id.value,
+                autor: autor.value,
+                titulo: titulo.value,
+                contenido: contenido.value
+            })
         };
+        fetch(url, settings)
+            .then(response => {
+                if (response.ok) {
+                    autor.value = '';
+                    contenido.vContenido = '';
+                    titulo.value = '';
+                    id.value = '';
+                    return response.json();
+                }
+            })
 
-        $.ajax({
-            url : '/blog-api/actualizar-comentario/:id',
-            method : "PUT",
-            data : JSON.stringify(obj),
-            ContentType : "application/json",
-            dataType : "json",
-            success : function( responseJSON ){
-                console.log(responseJSON);
-                location.reload();
-            },
-            error : function( err ){
-                console.log( err );
-            }
-        });
+            .then(responseJSON => {
+                loadComments();
+            });
     });
 
 }
@@ -140,24 +157,20 @@ function deleteComment(){
 
         let id = $('#id');
 
-        let obj = {
-            id : id
+        let url = 'http://localhost:8081/blog-api/remover-comentario/' + id.value;
+        let settings = {
+            method: "DELETE"
         };
+        fetch(url, settings)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+            })
 
-        $.ajax({
-            url : '/blog-api/remover-comentario/:id',
-            method : "DELETE",
-            data : JSON.stringify(obj),
-            ContentType : "application/json",
-            dataType : "json",
-            success : function( responseJSON ){
-                console.log(responseJSON);
-                location.reload();
-            },
-            error : function( err ){
-                console.log( err );
-            }
-        });
+            .then(responseJSON => {
+                loadComments();
+            });
     });
 
 }

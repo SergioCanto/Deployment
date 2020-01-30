@@ -1,4 +1,4 @@
-<h1> Desarrollo de Aplicaciones Web. Laboratorio 6 - "Blog CRUD" </h1>
+<h1> Desarrollo de Aplicaciones Web. Laboratorio 7 - "Modelo y Deployment" </h1>
 
 <p> Autor: Sergio Alejandro Canto Arizpe </p>
 

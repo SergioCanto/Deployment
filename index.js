@@ -1,165 +1,221 @@
-let express = require('express');
-let bodyParser = require('body-parser');
-let jasonParser = bodyParser.json();
-let uuidv4 = require('uuid/v4');
+let express = require('express'); 
 let morgan = require('morgan');
-
-let app = express();
-
+let uuid = require('uuid');
+let bodyParser = require('body-parser');
+let jsonParser = bodyParser.json();
+let app = express(); 
+let { commentList } = require('./model'); 
+let { DATABASE_URL, PORT } = require('./config');
 
 app.use(express.static('public'));
 app.use(morgan('dev'));
 
-let comentarios = [{
-    id : uuidv4(),
-    titulo : "Prueba 1",
-    contenido : "Esta es la prueba del primer comentario.",
-    autor : "Sergio Canto",
-    fecha : new Date()
-},
-{
-    id : uuidv4(),
-    titulo : "Comentario 2",
-    contenido : "Este comentario debe aparecer como el segundo.",
-    autor : "Alejandro Arizpe",
-    fecha : new Date()
-},
-{
-    id : uuidv4(),
-    titulo : "Tercer Comentario",
-    contenido : "Si el programa funciona correctamente, esto aparece como tercer comentario.",
-    autor : "Sergio Alejandro Canto Arizpe",
-    fecha : new Date()
-}];
+app.use(function (req, res, next) {
 
-//Regresa todos los comentarios del blog con 200
-app.get('/blog-api/comentarios', (req,res) =>{
-    return res.status(200).json(comentarios);
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE");
+
+    if (req.method === "OPTIONS") {
+        return res.send(204);
+    }
+
 });
 
-//Valida que el autor sea proporcionado, si no ERROR 406
-//Valida que el autor tenga comentarios en el blog, si no ERROR 404
-//Resgresa comentarios del autor con 200
-app.get('/blog-api/comentarios-por-autor', (req,res) =>{
-    let autor = req.query;
+let comentarios = [
+    {
+        id: uuid.v4(),
+        titulo: "Primer comentario",
+        contenido: "Primer comentario prueba.",
+        autor: "Sergio Canto",
+        fecha: new Date()
+    },
+    {
+        id: uuid.v4(),
+        titulo: "Segundo comentario",
+        contenido: "Segundo comentario prueba.",
+        autor: "Alejandro Arizpe",
+        fecha: new Date()
+    },
+    {
+        id: uuid.v4(),
+        titulo: "Tercer comentario",
+        contenido: "Tercer comentario prueba.",
+        autor: "Sergio A Canto Arizpe",
+        fecha: new Date()
+    }
+];
 
-    if(autor == "" || autor == undefined){
-        res.statusMessage = "No se ha proporcionado el autor.";
+app.get('/blog-api/comentarios', (req, res) => { 
+
+    commentList.get()
+        .then(comentarios => {
+            return res.status(200).json(comentarios);
+        })
+        .catch(error => {
+            res.statusMessage = "No se puede conectar con la base de datos.";
+            return res.status(500).send();
+        })
+
+});  
+
+app.get('/blog-api/comentarios-por-autor', (req, res) => {
+
+    let autor = req.query.autor;
+    
+    if (autor && autor !== '') {
+
+        commentList.getByAut(autor)
+            .then(response => {
+                return res.status(200).json(response)
+            })
+            .catch(error => {
+                return res.status(404).json(error);
+            });
+    }
+    else {
+        res.statusMessage ="Autor indefinido.";
         return res.status(406).send();
     }
-    else{
-        let result = comentarios.filter((elemento) => {
-            if(elemento.autor == autor){
-                return elemento;
+
+});  
+
+app.post('/blog-api/nuevo-comentario',jsonParser, (req, res) => {
+
+    let autor = req.body.autor;
+    let titulo= req.body.titulo;
+    let contenido = req.body.contenido;
+    if (contenido && contenido !== '' && titulo && titulo !== '' && autor && autor !== '') {
+        let comment = {
+            id: uuid.v4(),
+            titulo: `${titulo}`,
+            contenido: `${contenido}`,
+            autor: `${autor}`,
+            fecha: new Date()
+        };
+        commentList.add(comment)
+            .then(result => { return res.status(201).json(result); })
+
+            .catch(error => {
+                console.log(error);
+                return res.status(400).send();
+            });
+    }
+
+    else {
+        res.statusMessage = "Faltan datos.";
+        return res.status(406).send();
+    }
+
+});
+
+app.delete('/blog-api/remover-comentario/:id', jsonParser, (req, res) => {
+
+    let id = req.params.id;
+    
+    commentList.delete(id)
+        .then(result => { return res.status(200).json(result); })
+        .catch(error => {
+            console.log(error);
+            res.statusMessage = 'No se encontró el id.';
+            return res.status(404).send();
+        }); 
+
+});
+
+app.put('/blog-api/actualizar-comentario/:id', jsonParser, (req, res) => {
+
+    let idP = req.params.id;
+    let id = req.body.id;
+    let titulo = req.body.titulo;
+    let contenido = req.body.contenido;
+    let autor = req.body.autor;
+    let obj = {};
+
+    console.log(id);
+
+    if (id && id !== '') {
+        if (id === idP) {
+            if ((contenido && contenido !== '') || (titulo && titulo !== '') || (autor && autor !== '')) {
+                if (titulo){
+                    elemento.titulo = titulo;
+                }
+                if (autor){
+                    elemento.autor = autor;
+                }
+                if (contenido){
+                    elemento.contenido = contenido;
+                }
+                console.log(obj);
+                commentList.editComment(id, objSend)
+                .then(response => {
+                    return res.status(202).json({ response });
+                })
+                .catch(error => {
+                    res.statusMessage = 'El id no se encuentra en los comentarios';
+                    return res.status(404).send();});
+                }
+            else {
+                res.statusMessage = "No existen datos a modificar.";
+                return res.status(406).send();
+            }
+        }
+        else {
+            res.statusMessage = "Los ids no coinciden.";
+            return res.status(409).send();
+        }
+    }
+    else {
+        res.statusMessage = "No se encuentra el id en el cuerpo.";
+        return res.status(406).send();
+    }
+
+});
+
+let server;
+
+function runServer(port, databaseUrl) {
+    return new Promise((resolve, reject) => {
+        mongoose.connect(databaseUrl, response => {
+            if (response) {
+                return reject(response);
+            }
+            else {
+                server = app.listen(port, () => {
+                    console.log("App is running on port " + port);
+                    resolve();
+                })
+                    .on('error', err => {
+                        mongoose.disconnect();
+                        return reject(err);
+                    })
             }
         });
-    
-        if(result.length > 0){
-            return res.status(200).json(result);
-        }
-        else{
-            res.statusMessage = "El autor no tiene comentarios en el blog.";
-            return res.status(404).send();
-        }
-    }
-});
-
-//Mandar comentario sin id ni fecha
-//Validar los demas parametros, si no ERROR 406
-//Agregar comentario a la lista y regresar comentario con 201
-app.post('/blog-api/nuevo-comentario', jasonParser, (req, res) =>{
-
-    let {titulo, contenido, autor} = req.body;
-    let fecha = new Date();
-    let id = uuidv4();
-    let comentario = {
-        id : id,
-        titulo : titulo,
-        contenido : contenido,
-        autor : autor,
-        fecha : fecha
-    };
-
-    if(titulo == "" || contenido == "" || autor == "" || titulo == undefined || contenido == undefined || autor == undefined){
-        res.statusMessage = "Hacen falta parametros.";
-        return res.status(406).send();
-    }
-
-    else{
-        comentarios.push(comentario);
-        return res.status(201).json(comentario);
-    }
-});
-
-//Validar id, si no ERROR 404
-//Eliminar comentario de la lista con 200
-app.delete('/blog-api/remover-comentario/:id', (req, res) =>{
-    
-    let id = req.params.id;
-
-    let result = comentarios.find((elemento) => {
-        if(elemento.id == id){
-            return elemento;
-        }
     });
+}
 
-    if(result){
-        let removeIndex = comentarios.map(function(item) { return item.id; }).indexOf(id);
-        comentarios.splice(removeIndex, 1);
+function closeServer() {
+    return mongoose.disconnect()
+        .then(() => {
+            return new Promise((resolve, reject) => {
+                console.log('Closing the server');
+                server.close(err => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    else {
+                        resolve();
+                    }
+                });
+            });
+        });
+}
 
-        return res.status(200).send();
-    }
-    else{
-        res.statusMessage = "El id no existe.";
-        return res.status(404).send();
-    }
+runServer(PORT, DATABASE_URL);
 
-});
+module.exports = { app, runServer, closeServer };
 
-//Revisar si id es enviado, si no ERROR 406
-//Validar id, si no ERROR 409
-//Si no viene ningun campo ERROR 406
-//Actualizar datos y regresar comentario actualizado con 202
-app.put('/blog-api/actualizar-comentario/:id', jasonParser, (req, res) =>{
-    
-    let idBody = req.body.id;
-    let idParam = req.params.id;
-    let {titulo, contenido, autor} = req.body;
-
-    if(idBody == "" || id == undefined){
-        res.statusMessage = "El id no se encuentra en el cuerpo del request.";
-        return res.status(406).send();
-    }
-    else if(idParam != idBody){
-        res.statusMessage = "El id de parametro no coincide con el id del cuerpo.";
-        return res.status(409).send();
-    }
-    else if((titulo == "" && contenido == "" && autor == "") || (titulo && undefined || contenido && undefined || autor && undefined)){
-        res.statusMessage = "Hace falta algun dato a actualizar.";
-        return res.status(406).send();
-    }
-    else{
-        for(let i = 0; i < comentarios.length; i++){
-            if(comentarios[i].id === idBody){
-                let x = i;
-            }
-        }
-
-        if(titulo != "" && titulo != undefined){
-            comentarios[x].titulo = titulo;
-        }
-        if(contenido != "" && contenido != undefined){
-            comentarios[x].contenido = contenido;
-        }
-        if(autor != "" && autor != undefined){
-            comentarios[x].autor = autor;
-        }
-
-        return res.status(202).json(comentarios[x]);
-    }
-
-});
-
-app.listen(8080, () =>{
-    console.log("Servidor corriendo en puerto 8080.");
-});
+/*
+app.listen(8080, () => { 
+    console.log("servidor en 8080")
+}); */
