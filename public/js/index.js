@@ -85,7 +85,7 @@ function addComment(){
 
         let settings = {
             method: "POST",
-            headers: { "Content-type": "application/json; charset=UTF-8" },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         };
 
@@ -121,7 +121,7 @@ function actualizarComment(){
         let url = 'https://safe-spire-19122.herokuapp.com/blog-api/actualizar-comentario/' + id.value;
         let settings = {
             method: "PUT",
-            headers: { "Content-type": "application/json"},
+            headers: { "Content-Type": "application/json"},
             body: JSON.stringify({
                 id: id.value,
                 autor: autor.value,
