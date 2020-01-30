@@ -1,6 +1,6 @@
 function loadComments(){
 
-    let url = "http://localhost:8080/blog-api/comentarios";
+    let url = "https://safe-spire-19122.herokuapp.com/blog-api/comentarios";
     let settings = {
         method : "GET"
     };
@@ -23,7 +23,7 @@ function autorComments(){
 
         let autorBuscar = $('#autorBuscar');
 
-        let url = "http://localhost:8080/blog-api/comentarios-por-autor?autor=" + autorBuscar.value;
+        let url = "https://safe-spire-19122.herokuapp.com/blog-api/comentarios-por-autor?autor=" + autorBuscar.value;
         let settings = {
             method : "GET"
         };
@@ -76,7 +76,7 @@ function addComment(){
         let contenido = $('#Contenido').val();
         let autor = $('#Autor').val();
 
-        let url = 'http://localhost:8080/blog-api/nuevo-comentario';
+        let url = 'https://safe-spire-19122.herokuapp.com/blog-api/nuevo-comentario';
         let data = {
             autor: autor.value,
             titulo: titulo.value,
@@ -118,7 +118,7 @@ function actualizarComment(){
         let contenido = $('#Contenido').val();
         let autor = $('#Autor').val();
 
-        let url = 'http://localhost:8081/blog-api/actualizar-comentario/' + id.value;
+        let url = 'https://safe-spire-19122.herokuapp.com/blog-api/actualizar-comentario/' + id.value;
         let settings = {
             method: "PUT",
             headers: { "Content-type": "application/json"},
@@ -157,7 +157,7 @@ function deleteComment(){
 
         let id = $('#id');
 
-        let url = 'http://localhost:8081/blog-api/remover-comentario/' + id.value;
+        let url = 'https://safe-spire-19122.herokuapp.com/blog-api/remover-comentario/' + id.value;
         let settings = {
             method: "DELETE"
         };
